@@ -171,6 +171,9 @@ public class Fluid {
 
             result = result / ((x2 - x1) * (y2 - y1));
         }
+        else if ((x_pos < N - 1) && (y_pos < N - 1)) {
+            result = s[IX(x_pos, y_pos)];
+        }
 
 
 //    	return s[IX(x_pos, y_pos)];
@@ -244,57 +247,63 @@ public class Fluid {
      */
     public void transport( float[] s1, float[] s0, float[][] U, float dt ) {
     	// TODO: Objective 5: Implement implicit advection of quantities by tracing particles backwards in time in the provided velocity field.
-//        int i, j, i0, j0, i1, j1;
-//        float x, y, s_0, t0, s_1, t1, dt0;
-//        dt0 = dt*N;
-//        for ( i=1 ; i<=N ; i++ ) {
-//            for ( j=1 ; j<=N ; j++ ) {
-//                x = i-dt0*U[0][IX(i,j)]; y = j-dt0*U[1][IX(i,j)];
-//                if (x<0.5) x=0.5f; if (x>N+0.5) x=N+ 0.5f; i0=(int)x; i1=i0+1;
-//                if (y<0.5) y=0.5f; if (y>N+0.5) y=N+ 0.5f; j0=(int)y; j1=j0+1;
-//                s_1 = x-i0; s_0 = 1-s_1; t1 = y-j0; t0 = 1-t1;
-//                s1[IX(i,j)] = s_0 * (t0*s0[IX(i0,j0)]+t1*s0[IX(i0,j1)]) + s_1*(t0*s0[IX(i1,j0)]+t1*s0[IX(i1,j1)]);
-//
-//            }
-//        }
-//        setBoundary( 0, s1 );
+        int i, j, i0, j0, i1, j1;
+        float x, y, s_0, t0, s_1, t1, dt0;
+        dt0 = dt*N;
+        for ( i=1 ; i<=N ; i++ ) {
+            for ( j=1 ; j<=N ; j++ ) {
+                x = i-dt0*U[0][IX(i,j)]; y = j-dt0*U[1][IX(i,j)];
+                if (x<0.5) x=0.5f; if (x>N+0.5) x=N+ 0.5f; i0=(int)x; i1=i0+1;
+                if (y<0.5) y=0.5f; if (y>N+0.5) y=N+ 0.5f; j0=(int)y; j1=j0+1;
+                s_1 = x-i0; s_0 = 1-s_1; t1 = y-j0; t0 = 1-t1;
+                s1[IX(i,j)] = s_0 * (t0*s0[IX(i0,j0)]+t1*s0[IX(i0,j1)]) + s_1*(t0*s0[IX(i1,j0)]+t1*s0[IX(i1,j1)]);
+
+            }
+        }
+        setBoundary( 0, s1 );
     }
     
     /**
      * Does the Poisson solve to make sure that velocities U respect incompressible flow
      * @param U
      */
+
+    // div = u0 = U1[0]
+    // p = v0 = U1[1]
+    // u = U[0]
+    // v = U[1]
+
     private void project( float[][] U ) {
         if (Double.isNaN(U0[0][0])) {
             int i = 0;
         }
     	// TODO: Objective 6: Implement pressure projection on the provided velocity field
-//        int i, j, k;
-//        float h;
-//        h = 1.0f / N;
-//        for ( i=1 ; i<=N ; i++ ) {
-//            for ( j=1 ; j<=N ; j++ ) {
-//                U[0][IX(i,j)] = -0.5f*h*(U0[0][IX(i+1,j)]-U0[0][IX(i-1,j)]+U0[1][IX(i,j+1)]-U0[1][IX(i,j-1)]);
-//                U[1][IX(i,j)] = 0;
-//            }
-//        }
-//        setBoundary ( 0, U[0] ); setBoundary (0, U[1] );
-//        for ( k=0 ; k<20 ; k++ ) {
-//            for ( i=1 ; i<=N ; i++ ) {
-//                for ( j=1 ; j<=N ; j++ ) {
-//                    U[1][IX(i,j)] = (U[0][IX(i,j)]+U[1][IX(i-1,j)]+U[1][IX(i+1,j)]+
-//                            U[1][IX(i,j-1)]+U[1][IX(i,j+1)])/4;
-//                }
-//            }
-//            setBoundary (0, U[1] );
-//        }
-//        for ( i=1 ; i<=N ; i++ ) {
-//            for ( j=1 ; j<=N ; j++ ) {
-//                U0[0][IX(i,j)] -= 0.5*(U[1][IX(i+1,j)]-U[1][IX(i-1,j)])/h;
-//                U0[1][IX(i,j)] -= 0.5*(U[1][IX(i,j+1)]-U[1][IX(i,j-1)])/h;
-//            }
-//        }
-//        setBoundary (1, U0[0] ); setBoundary (2, U0[1] );
+        int i, j, k;
+        float h;
+        h = 1.0f / N;
+        for ( i=1 ; i<=N ; i++ ) {
+            for ( j=1 ; j<=N ; j++ ) {
+                U1[0][IX(i,j)] = -0.5f*h*(U[0][IX(i+1,j)]-U[0][IX(i-1,j)]+U[1][IX(i,j+1)]-U[1][IX(i,j-1)]);
+                U1[1][IX(i,j)] = 0;
+            }
+        }
+        setBoundary ( 0, U1[0] ); setBoundary (0, U1[1] );
+        for ( k=0 ; k<20 ; k++ ) {
+            for ( i=1 ; i<=N ; i++ ) {
+                for ( j=1 ; j<=N ; j++ ) {
+                    U1[1][IX(i,j)] = (U1[0][IX(i,j)]+U1[1][IX(i-1,j)]+U1[1][IX(i+1,j)]+
+                            U1[1][IX(i,j-1)]+U1[1][IX(i,j+1)])/4;
+                }
+            }
+            setBoundary (0, U1[1] );
+        }
+        for ( i=1 ; i<=N ; i++ ) {
+            for ( j=1 ; j<=N ; j++ ) {
+                U[0][IX(i,j)] -= 0.5*(U1[1][IX(i+1,j)]-U1[1][IX(i-1,j)])/h;
+                U[1][IX(i,j)] -= 0.5*(U1[1][IX(i,j+1)]-U1[1][IX(i,j-1)])/h;
+            }
+        }
+        setBoundary (1, U[0] ); setBoundary (2, U[1] );
     }
     
     /**
@@ -396,25 +405,24 @@ public class Fluid {
 //        if (Double.isNaN(referenceTemperature)) {
 //            int i = 0;
 //        }
-//        if (Double.isNaN(U0[0][0])) {
-//            int i = 0;
-//        }
+        if (Double.isNaN(U0[0][0])) {
+            int i = 0;
+        }
 //    	// TODO: Objective 7: change velocities based on the temperature.  Don't forget to set Boundaries after modifying velocities!
-//        for ( int i=1 ; i<=N ; i++ ) {
-//            for ( int j=1 ; j<=N ; j++ ) {
-//                float temp_delta = ((float) referenceTemperature) -  temperature0[IX(i,j)];
-//                float F = temp_delta * beta * dt;
-//
-//                U[1][IX(i,j)] = U[0][IX(i,j)] + F;
-//
-//            }
-//        }
-//
-//        if (Double.isNaN(U0[0][0])) {
-//            int i = 0;
-//        }
-//
-//        setBoundary(0, U[1]);
+        for ( int i=1 ; i<=N ; i++ ) {
+            for ( int j=1 ; j<=N ; j++ ) {
+                float temp_delta = ((float) referenceTemperature) -  temperature0[IX(i,j)];
+                float F = temp_delta * beta * dt;
+
+                U[1][IX(i,j)] = U[0][IX(i,j)] + F;
+            }
+        }
+
+        if (Double.isNaN(U0[0][0])) {
+            int i = 0;
+        }
+
+        setBoundary(0, U[1]);
     }
     
     /** Worker variables for mouse interaction */
