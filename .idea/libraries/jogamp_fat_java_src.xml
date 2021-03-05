@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="jogamp-fat-java-src">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/jars/jogamp-fat.jar!/" />
+      <root url="jar://$PROJECT_DIR$/jars/mintools.jar!/" />
+      <root url="jar://$PROJECT_DIR$/jars/mtj.jar!/" />
+      <root url="jar://$PROJECT_DIR$/jars/slf4j-api-1.7.30.jar!/" />
+      <root url="jar://$PROJECT_DIR$/jars/slf4j-simple-1.7.30.jar!/" />
+      <root url="jar://$PROJECT_DIR$/jars/vecmath.jar!/" />
+      <root url="jar://$PROJECT_DIR$/jars/xuggle-xuggler-5.4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/jars/jogamp-fat-java-src.zip!/" />
+      <root url="jar://$PROJECT_DIR$/jars/mintools.jar!/" />
+      <root url="jar://$PROJECT_DIR$/jars/mtjsrc.zip!/" />
+      <root url="jar://$PROJECT_DIR$/jars/vecmath.jar!/" />
+    </SOURCES>
+  </library>
+</component>
