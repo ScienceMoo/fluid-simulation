@@ -44,7 +44,7 @@ public class Fluid {
     /** temperature (packed) temporary variable*/
     private float[] temperature1;
     
-    private IntParameter Nval = new IntParameter( "grid size", 256, 4, 256 );
+    private IntParameter Nval = new IntParameter( "grid size", 16, 4, 256 );
     
     /** Number of grid cells (not counting extra boundary cells */
     public int N = 16;
@@ -144,7 +144,6 @@ public class Fluid {
         int y_pos = Math.round(x.y * N);
 
         if ((x_pos < N )&& (y_pos < N ) && (x_pos > 0) && (y_pos > 0)) {
-//            result = s[IX(x_pos, y_pos)];
             int x1 = x_pos + 1; int x2 = x_pos - 1;
             int y1 = y_pos + 1; int y2 = y_pos - 1;
             float Q11 = s[IX(x1, y1)]; float Q12 = s[IX(x1,y2)];
@@ -190,12 +189,12 @@ public class Fluid {
 
     	// TODO: Objective 4: Implement the tracing of a particle position in the velocity field.
     	// Use the getVelocity method, which calls the interpolation method (that you need to write)
+
+        x1.set(x0);
+
         Vector2f velocity = new Vector2f();
-
         getVelocity(x0, U, velocity);
-
         velocity.scale(h);
-        x1.add(x0);
         x1.add(velocity);
     }
         
@@ -235,7 +234,6 @@ public class Fluid {
     	// TODO: Objective 5: Implement implicit advection of quantities by tracing particles backwards in time in the provided velocity field.
         int i, j, i0, j0, i1, j1;
         float x, y, s_0, t0, s_1, t1, dt0;
-        dt0 = dt*N; // multiplied by N because we are using cell index values
         for ( i=1 ; i<=N ; i++ ) {
             for ( j=1 ; j<=N ; j++ ) {
                 Point2f x2 = new Point2f();
@@ -243,9 +241,8 @@ public class Fluid {
                 x2.scale((float) 1.0 / N);
                 Point2f x1 = new Point2f();
                 traceParticle(x2, U, -dt, x1);
-                x1.scale(N);
-//
-//                x = i-dt0*U[0][IX(i,j)]; y = j-dt0*U[1][IX(i,j)]; // go backwards one step
+                x1.scale((float) N);
+
                 x = x1.x; y = x1.y;
 
                 if (x<0.5) x=0.5f; if (x>N+0.5) x=N+ 0.5f; i0=(int)x; i1=i0+1;
@@ -268,10 +265,8 @@ public class Fluid {
     // v = U[1]
 
     private void project( float[][] U ) {
-//        if (Double.isNaN(U0[0][0])) {
-//            int i = 0;
-//        }
-//    	// TODO: Objective 6: Implement pressure projection on the provided velocity field
+
+    	// TODO: Objective 6: Implement pressure projection on the provided velocity field
         int i, j, k;
         float h;
         h = 1.0f / N;
@@ -321,9 +316,7 @@ public class Fluid {
      * @param amount	amount
      */
     private void addSource( float[] S, float dt, Tuple2f x, float amount ) {
-        if (Double.isNaN(U0[0][0])) {
-            int i = 0;
-        }
+
     	// TODO: Objective 2: add a "source" to the provided quantity field.  
     	// Use bilinear interpolation (similar to your interpolate method) to distribute the amount.
     	// Note that this is used by mouse interaction and temperature forces on the velocity field (through addForce)
@@ -394,10 +387,6 @@ public class Fluid {
 
                 U[1][IX(i,j)] = U[1][IX(i,j)] + F;
             }
-        }
-
-        if (Double.isNaN(U0[0][0])) {
-            int i = 0;
         }
 
         setBoundary(0, U[1]);
@@ -516,7 +505,7 @@ public class Fluid {
     private DoubleParameter buoyancy = new DoubleParameter( "bouyancy", 0.1, -1, 1 );
     private IntParameter iterations = new IntParameter( "GS iterations", 30, 0, 1000 );    
     private DoubleParameter mouseForce = new DoubleParameter( "mouse force", 1e2, 1, 1e3 );
-    public DoubleParameter timeStepSize = new DoubleParameter( "time step size", 0.1, 0.001, 1 );
+    public DoubleParameter timeStepSize = new DoubleParameter( "time step size", 0.01, 0.001, 1 );
     
     /**
      * Get the parameters for the fluid 

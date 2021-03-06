@@ -32,7 +32,7 @@ public class Filament {
     
     private static DoubleParameter defaultMaxAge = new DoubleParameter( "max age", 60, 10, 150 );
     
-    private static DoubleParameter refinementThreshold = new DoubleParameter( "refinement threshold", 0.5, 0.1, 1 );
+    private static DoubleParameter refinementThreshold = new DoubleParameter( "refinement threshold", 0.1, 0.1, 1 );
     
     private static IntParameter maxParticles = new IntParameter( "max particles", 1000, 500, 1500 );
 
@@ -104,7 +104,7 @@ public class Filament {
             if (prev != null) {
                 if (p.distance(prev) > dx * thresh) {
                     Point2f h = new Point2f();
-                    h.interpolate(prev, p, 0.5f);
+                    h.interpolate(prev, p, 0.5f); // halfway point
                     Ltmp.add(h);
                 }
             }

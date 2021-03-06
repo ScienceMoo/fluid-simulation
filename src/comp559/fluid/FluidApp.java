@@ -448,7 +448,7 @@ public class FluidApp implements SceneGraphNode, Interactor {
     private BooleanParameter run = new BooleanParameter( "animate", false );
     private DoubleParameter velocityDisplayScale = new DoubleParameter( "velocity display scale", 0.1, 0.01, 100 );
     private BooleanParameter drawVelocities = new BooleanParameter( "draw velocities", true );
-    private BooleanParameter drawBoundaryCells = new BooleanParameter( "draw boundary cells", false );
+    private BooleanParameter drawBoundaryCells = new BooleanParameter( "draw boundary cells", true );
     private BooleanParameter drawScalars = new BooleanParameter( "draw scalar field", true );
     private BooleanParameter drawSmooth = new BooleanParameter( "draw smooth", true );
     private IntParameter refineFactor = new IntParameter( "smooth refinement factor", 1, 1, 8 );
