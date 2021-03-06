@@ -204,8 +204,8 @@ public class FluidApp implements SceneGraphNode, Interactor {
      */
     private void setPosFromMouse( MouseEvent e, Tuple2f x ) {
         //TODO: fix DPI stuff
-        int mx = e.getX();
-        int my = e.getY();
+        int mx = 2 * e.getX();
+        int my = 2 * e.getY();
         x.x = (float) (( mx - offset ) / scale);
         x.y = (float) (( my - offset ) / scale);
     }

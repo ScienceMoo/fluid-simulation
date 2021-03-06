@@ -38,7 +38,7 @@ public class Filament {
 
     static public JPanel getControls() {
         VerticalFlowPanel vfp = new VerticalFlowPanel();
-        vfp.setBorder( new TitledBorder("Filament Controls" ));
+        vfp.setBorder( new TitledBorder("   Filament Controls" ));
         vfp.add( defaultMaxAge.getSliderControls(false) );
         vfp.add( refinementThreshold.getSliderControls(false));
         vfp.add( maxParticles.getSliderControls() );

@@ -44,7 +44,7 @@ public class Fluid {
     /** temperature (packed) temporary variable*/
     private float[] temperature1;
     
-    private IntParameter Nval = new IntParameter( "grid size", 16, 4, 256 );
+    private IntParameter Nval = new IntParameter( "grid size", 256, 4, 256 );
     
     /** Number of grid cells (not counting extra boundary cells */
     public int N = 16;
@@ -144,39 +144,24 @@ public class Fluid {
         int y_pos = Math.round(x.y * N);
 
         if ((x_pos < N )&& (y_pos < N ) && (x_pos > 0) && (y_pos > 0)) {
-//            float right = s[IX(x_pos, y_pos + 1)];
-//            float left = s[IX(x_pos,y_pos - 1)];
-//            float up = s[IX(x_pos - 1,y_pos)];
-//            float down = s[IX(x_pos + 1, y_pos)];
-//
-//            result = (up + right + left + down) / 4;
-
+//            result = s[IX(x_pos, y_pos)];
             int x1 = x_pos + 1; int x2 = x_pos - 1;
             int y1 = y_pos + 1; int y2 = y_pos - 1;
-            float Q11 = s[IX(x1, y1)];
-            float Q12 = s[IX(x1,y2)];
-            float Q21 = s[IX(x2,y1)];
-            float Q22 = s[IX(x2, y2)];
-
-            //        float f_x_y1 = ((x2 - x_pos) / (x2 - x1)) * Q11;
-            //        f_x_y1 += ((x_pos - x1) / (x2 - x1)) * Q21;
-            //        float f_x_y2 = ((x2 - x_pos) / (x2 - x1)) * Q12;
-            //        f_x_y2 += ((x_pos - x1) / (x2 - x1)) * Q22;
-
+            float Q11 = s[IX(x1, y1)]; float Q12 = s[IX(x1,y2)];
+            float Q21 = s[IX(x2,y1)]; float Q22 = s[IX(x2, y2)];
 
             float tmp1 = ((y2 - y_pos) * Q11) + ((y_pos - y1) * Q12);
             float tmp2 = ((y2 - y_pos) * Q21) + ((y_pos - y1) * Q22);
 
-            result = (tmp1 * (x2 - x_pos)) + (tmp2 * (x_pos - x1));
+            float tmp3 = (tmp1 * (x2 - x_pos)) + (tmp2 * (x_pos - x1));
 
-            result = result / ((x2 - x1) * (y2 - y1));
+            result = tmp3 / (4 * (x2 - x1) * (y2 - y1));
         }
         else if ((x_pos < N - 1) && (y_pos < N - 1)) {
             result = s[IX(x_pos, y_pos)];
         }
 
 
-//    	return s[IX(x_pos, y_pos)];
     	return result;
     }
         
@@ -206,6 +191,7 @@ public class Fluid {
     	// TODO: Objective 4: Implement the tracing of a particle position in the velocity field.
     	// Use the getVelocity method, which calls the interpolation method (that you need to write)
         Vector2f velocity = new Vector2f();
+
         getVelocity(x0, U, velocity);
 
         velocity.scale(h);
@@ -249,15 +235,23 @@ public class Fluid {
     	// TODO: Objective 5: Implement implicit advection of quantities by tracing particles backwards in time in the provided velocity field.
         int i, j, i0, j0, i1, j1;
         float x, y, s_0, t0, s_1, t1, dt0;
-        dt0 = dt*N;
+        dt0 = dt*N; // multiplied by N because we are using cell index values
         for ( i=1 ; i<=N ; i++ ) {
             for ( j=1 ; j<=N ; j++ ) {
-                x = i-dt0*U[0][IX(i,j)]; y = j-dt0*U[1][IX(i,j)];
+                Point2f x2 = new Point2f();
+                x2.x = i; x2.y = j;
+                x2.scale((float) 1.0 / N);
+                Point2f x1 = new Point2f();
+                traceParticle(x2, U, -dt, x1);
+                x1.scale(N);
+//
+//                x = i-dt0*U[0][IX(i,j)]; y = j-dt0*U[1][IX(i,j)]; // go backwards one step
+                x = x1.x; y = x1.y;
+
                 if (x<0.5) x=0.5f; if (x>N+0.5) x=N+ 0.5f; i0=(int)x; i1=i0+1;
                 if (y<0.5) y=0.5f; if (y>N+0.5) y=N+ 0.5f; j0=(int)y; j1=j0+1;
                 s_1 = x-i0; s_0 = 1-s_1; t1 = y-j0; t0 = 1-t1;
                 s1[IX(i,j)] = s_0 * (t0*s0[IX(i0,j0)]+t1*s0[IX(i0,j1)]) + s_1*(t0*s0[IX(i1,j0)]+t1*s0[IX(i1,j1)]);
-
             }
         }
         setBoundary( 0, s1 );
@@ -274,10 +268,10 @@ public class Fluid {
     // v = U[1]
 
     private void project( float[][] U ) {
-        if (Double.isNaN(U0[0][0])) {
-            int i = 0;
-        }
-    	// TODO: Objective 6: Implement pressure projection on the provided velocity field
+//        if (Double.isNaN(U0[0][0])) {
+//            int i = 0;
+//        }
+//    	// TODO: Objective 6: Implement pressure projection on the provided velocity field
         int i, j, k;
         float h;
         h = 1.0f / N;
@@ -334,45 +328,36 @@ public class Fluid {
     	// Use bilinear interpolation (similar to your interpolate method) to distribute the amount.
     	// Note that this is used by mouse interaction and temperature forces on the velocity field (through addForce)
     	// as well as for heat sources and sinks (i.e., user created points in the grid).
-        int i = Math.round (x.x * N);
-        int j = Math.round (x.y * N);
-//
-//        S[IX(i - 1,j)] = S[IX(i - 1,j)] + (dt * amount / 4);
-//        S[IX(i,j - 1)] = S[IX(i,j - 1)] + (dt * amount / 4);
-//        S[IX(i + 1, j)] = S[IX(i + 1, j)] + (dt * amount / 4);
-//        S[IX(i, j + 1)] = S[IX(i, j + 1)] + (dt * amount / 4);
+        int x_pos = Math.round (x.x * N);
+        int y_pos = Math.round (x.y * N);
 
-//        float diff = S[IX(i-1,j)]+S[IX(i+1,j)]+ S[IX(i,j-1)]+S[IX(i,j+1)] - (4*S[IX(i,j)]);
-        S[IX(i,j)] = S[IX(i,j)] + (dt * amount);
+        int divisions = 0;
 
+        if ((x_pos > 0) && (y_pos > 0)) {
+            divisions ++;
+        }
+        if ((x_pos > 0) && (y_pos < N)) {
+            divisions++;
+        }
+        if ((x_pos < N) && (y_pos > 0)) {
+            divisions ++;
+        }
+        if ((x_pos < N) && (y_pos < N)) {
+            divisions++;
+        }
 
-//        int divisions = 0;
-//
-//        if (x_pos > 0) {
-//            divisions++;
-//        }
-//        if (y_pos > 0) {
-//            divisions++;
-//        }
-//        if (x_pos < N) {
-//            divisions++;
-//        }
-//        if (y_pos < N) {
-//            divisions++;
-//        }
-//
-//        if (x_pos > 0) {
-//            S[IX(x_pos - 1,y_pos)] = S[IX(x_pos - 1,y_pos)] + (dt * amount / divisions);
-//        }
-//        if (y_pos > 0) {
-//            S[IX(x_pos,y_pos - 1)] = S[IX(x_pos,y_pos - 1)] + (dt * amount / divisions);
-//        }
-//        if (x_pos < N) {
-//            S[IX(x_pos + 1, y_pos)] = S[IX(x_pos + 1, y_pos)] + (dt * amount / divisions);
-//        }
-//        if (y_pos < N) {
-//            S[IX(x_pos, y_pos + 1)] = S[IX(x_pos, y_pos + 1)] + (dt * amount / divisions);
-//        }
+        if ((x_pos > 0) && (y_pos > 0)) {
+            S[IX(x_pos - 1,y_pos - 1)] = S[IX(x_pos - 1,y_pos - 1)] + (dt * amount / divisions);
+        }
+        if ((x_pos > 0) && (y_pos < N)) {
+            S[IX(x_pos - 1,y_pos + 1)] = S[IX(x_pos - 1,y_pos + 1)] + (dt * amount / divisions);
+        }
+        if ((x_pos < N) && (y_pos > 0)) {
+            S[IX(x_pos + 1,y_pos - 1)] = S[IX(x_pos + 1,y_pos - 1)] + (dt * amount / divisions);
+        }
+        if ((x_pos < N) && (y_pos < N)) {
+            S[IX(x_pos + 1,y_pos + 1)] = S[IX(x_pos + 1,y_pos + 1)] + (dt * amount / divisions);
+        }
     }
     
     /**
@@ -401,20 +386,13 @@ public class Fluid {
     private void addTemperatureForce( float[][] U, float dt ) {       	
         double referenceTemperature = getReferenceTemperature();
         float beta = buoyancy.getFloatValue();
-//
-//        if (Double.isNaN(referenceTemperature)) {
-//            int i = 0;
-//        }
-        if (Double.isNaN(U0[0][0])) {
-            int i = 0;
-        }
 //    	// TODO: Objective 7: change velocities based on the temperature.  Don't forget to set Boundaries after modifying velocities!
         for ( int i=1 ; i<=N ; i++ ) {
             for ( int j=1 ; j<=N ; j++ ) {
-                float temp_delta = ((float) referenceTemperature) -  temperature0[IX(i,j)];
+                float temp_delta = ((float) referenceTemperature) - temperature0[IX(i,j)];
                 float F = temp_delta * beta * dt;
 
-                U[1][IX(i,j)] = U[0][IX(i,j)] + F;
+                U[1][IX(i,j)] = U[1][IX(i,j)] + F;
             }
         }
 
