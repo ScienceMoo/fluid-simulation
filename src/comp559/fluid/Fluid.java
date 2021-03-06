@@ -44,7 +44,7 @@ public class Fluid {
     /** temperature (packed) temporary variable*/
     private float[] temperature1;
     
-    private IntParameter Nval = new IntParameter( "grid size", 16, 4, 256 );
+    private IntParameter Nval = new IntParameter( "grid size", 32, 4, 256 );
     
     /** Number of grid cells (not counting extra boundary cells */
     public int N = 16;
@@ -140,10 +140,10 @@ public class Fluid {
     	// TODO: Objective 1: implement bilinear interpolation (try to make this code fast!)
 
         float result = 0;
-        int x_pos = Math.round(x.x * N);
-        int y_pos = Math.round(x.y * N);
+        int x_pos = Math.round(x.x * (N - 1));
+        int y_pos = Math.round(x.y * (N - 1));
 
-        if ((x_pos < N )&& (y_pos < N ) && (x_pos > 0) && (y_pos > 0)) {
+        if ((IX(x_pos + 1, y_pos + 1) < s.length) && (IX(x_pos - 1, y_pos - 1) >= 0)) {
             int x1 = x_pos + 1; int x2 = x_pos - 1;
             int y1 = y_pos + 1; int y2 = y_pos - 1;
             float Q11 = s[IX(x1, y1)]; float Q12 = s[IX(x1,y2)];
@@ -154,12 +154,11 @@ public class Fluid {
 
             float tmp3 = (tmp1 * (x2 - x_pos)) + (tmp2 * (x_pos - x1));
 
-            result = tmp3 / (4 * (x2 - x1) * (y2 - y1));
+            result = tmp3 / (2 * (x2 - x1) * (y2 - y1));
         }
-        else if ((x_pos < N - 1) && (y_pos < N - 1)) {
-            result = s[IX(x_pos, y_pos)];
+        if (IX(x_pos, y_pos) < s.length) {
+            result = (result + s[IX(x_pos, y_pos)]) / 2;
         }
-
 
     	return result;
     }
@@ -321,36 +320,39 @@ public class Fluid {
     	// Use bilinear interpolation (similar to your interpolate method) to distribute the amount.
     	// Note that this is used by mouse interaction and temperature forces on the velocity field (through addForce)
     	// as well as for heat sources and sinks (i.e., user created points in the grid).
-        int x_pos = Math.round (x.x * N);
-        int y_pos = Math.round (x.y * N);
+        int x_pos = Math.round (x.x * (N - 1));
+        int y_pos = Math.round (x.y * (N - 1));
 
         int divisions = 0;
 
-        if ((x_pos > 0) && (y_pos > 0)) {
+        if (x_pos > 0) {
             divisions ++;
         }
-        if ((x_pos > 0) && (y_pos < N)) {
+        if (y_pos > 0) {
             divisions++;
         }
-        if ((x_pos < N) && (y_pos > 0)) {
+        if (x_pos < N) {
             divisions ++;
         }
-        if ((x_pos < N) && (y_pos < N)) {
+        if (y_pos < N) {
             divisions++;
         }
 
-        if ((x_pos > 0) && (y_pos > 0)) {
-            S[IX(x_pos - 1,y_pos - 1)] = S[IX(x_pos - 1,y_pos - 1)] + (dt * amount / divisions);
+        divisions *= 2;
+
+        if (x_pos > 0) {
+            S[IX(x_pos - 1,y_pos)] = S[IX(x_pos - 1,y_pos)] + (dt * amount / divisions);
         }
-        if ((x_pos > 0) && (y_pos < N)) {
-            S[IX(x_pos - 1,y_pos + 1)] = S[IX(x_pos - 1,y_pos + 1)] + (dt * amount / divisions);
+        if (y_pos > 0) {
+            S[IX(x_pos,y_pos + 1)] = S[IX(x_pos,y_pos + 1)] + (dt * amount / divisions);
         }
-        if ((x_pos < N) && (y_pos > 0)) {
-            S[IX(x_pos + 1,y_pos - 1)] = S[IX(x_pos + 1,y_pos - 1)] + (dt * amount / divisions);
+        if (x_pos < N) {
+            S[IX(x_pos + 1,y_pos)] = S[IX(x_pos + 1,y_pos)] + (dt * amount / divisions);
         }
-        if ((x_pos < N) && (y_pos < N)) {
-            S[IX(x_pos + 1,y_pos + 1)] = S[IX(x_pos + 1,y_pos + 1)] + (dt * amount / divisions);
+        if (y_pos < N) {
+            S[IX(x_pos,y_pos + 1)] = S[IX(x_pos,y_pos + 1)] + (dt * amount / divisions);
         }
+        S[IX(x_pos,y_pos)] = S[IX(x_pos,y_pos)] + (dt * amount / 2);
     }
     
     /**
